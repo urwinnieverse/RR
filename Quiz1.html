@@ -1,0 +1,247 @@
+<!DOCTYPE HTML >
+<head>
+<title> Running River </title>
+<link rel="stylesheet" href="RR.css">
+<link rel="icon" type="image/x-icon" href="RR.png"">
+<meta name="viewport" content="width= device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Abyssinica+SIL" rel="stylesheet">
+</head>
+<body>
+ 
+    
+    <header>
+    <a href="members.html" class="mainparts">Members</a>
+    <a href="memories.html" class="mainparts">Mural</a> 
+    <a href="index.html"> <img src="wavelogo.gif" height="60px" width="auto"> </a>
+    <a href="quotes.html" class="mainparts">Quotes</a>
+    <a href="quizzes.html" class="mainparts">Quizzes</a>            
+    </header>
+
+    <div id="quiz_page">
+       
+        <div id="quiz_screen">
+
+         <button onclick="pastQuestion()" class="arrows" style="background-image: url(arrow_l.png); background-size: 100px 100px;">  </button>    
+        
+
+           <div id="q_a"> 
+
+              <div id="quiz_background"><p id="Question">favourite food</p></div>
+             <span> <label><input type="radio" name="q1" data-member="noni"> Spicy Chips</label>
+              <label><input type="radio" name="q1" data-member="roor"> Chocolate</label>
+              <label><input type="radio" name="q1" data-member="jojo"> Fruit</label> </span>
+
+           </div>
+
+     <button onclick="nextQuestion()" class="arrows" style="background-image: url(arrow_r.png); background-size: 100px 100px;">  </button>
+
+
+        </div>
+
+
+    </div>
+
+    <div id="resultPopup" class="popup">
+    <div class="popup-content">
+        <span class="close-btn" onclick="closePopup()">&times;</span>
+        <p>Your member is</p>
+        <p id="resultText"></p>
+    </div>
+</div> 
+
+
+
+</body>
+
+
+<script>
+const quizData = [
+  {
+    question: "Favourite food?",
+    answers: [
+      { text: "pasta and pizza", member: "Noni" },
+      { text: "Sweets", member: "Thrthr" },
+      { text: "Pizza", member: "Nimnim" },
+      { text: "blbn alhabba cake", member: "Lanlan" },
+      { text: "pasta", member: "Rahrah" }
+    ]
+  },
+  {
+    question: "Favorite color?",
+    answers: [
+      { text: "Brown", member: "Noni" },
+      { text: "Pink", member: "Thrthr" },
+      { text: "Yellow", member: "Nimnim" },
+      { text: "Blue", member: "Lanlan" },
+      { text: "Purple", member: "Rahrah" }
+    ]
+  },
+
+  {
+    question: "What month were you born?",
+    answers: [
+      { text: "june", member: "Rahrah" },
+      { text: "november", member: "Thrthr" },
+      { text: "april", member: "Noni" },
+      { text: "july", member: "Lanlan" },
+      { text: "october", member: "Nimnim" }
+    ]
+  },
+
+  {
+    question: "Favorite animal?",
+    answers: [
+      { text: "owl", member: "Nimnim" },
+      { text: "cat", member: "Noni" },
+      { text: "parrot", member: "Rahrah" },
+      { text: "turtle", member: "Thrthr" },
+      { text: "puppy", member: "Lanlan" }
+    ]
+  },
+
+  {
+    question: "What is your favourite thing to watch",
+    answers: [
+      { text: "i watch everything", member: "Noni" },
+      { text: "Medical and romantic series", member: "Thrthr" },
+      { text: "super hero movies", member: "Nimnim" },
+      { text: "kdrama", member: "Lanlan" },
+      { text: "kdramas and cdramas", member: "Rahrah" }
+    ]
+  },
+
+  {
+    question: "what is your favourite activity to do",
+    answers: [
+      { text: "watching series or movies", member: "Noni" },
+      { text: "reading", member: "Thrthr" },
+      { text: "puzzle, coloring", member: "Nimnim" },
+      { text: "going out", member: "Lanlan" },
+      { text: "drawing", member: "Rahrah" }
+    ]
+  },
+
+
+  {
+    question: "how your friend describe you?",
+    answers: [
+      { text: "old", member: "Noni" },
+      { text: "weird", member: "Thrthr" },
+      { text: "the mom of the group", member: "Nimnim" },
+      { text: "salty", member: "Lanlan" },
+      { text: "artistic", member: "Rahrah" }
+    ]
+  },
+
+
+  {
+    question: "in age order, what is your place",
+    answers: [
+      { text: "5th", member: "Rahrah" },
+      { text: "2nd", member: "Nimnim" },
+      { text: "1st", member: "Noni" },
+      { text: "4th", member: "Lanlan" },
+      { text: "3rd", member: "Thrthr" }
+    ]
+  },
+
+
+  {
+    question: "Favorite drink?",
+    answers: [
+      { text: "matcha", member: "Noni" },
+      { text: "spanish latte", member: "Thrthr" },
+      { text: "tea", member: "Nimnim" },
+      { text: "coffee", member: "Lanlan" },
+      { text: "red tea", member: "Rahrah" }
+    ]
+  },
+
+  {
+    question: "Favorite your rule in a band?",
+    answers: [
+      { text: "main singer", member: "Noni" },
+      { text: "rapper", member: "Thrthr" },
+      { text: "Yellow", member: "Nimnim" },
+      { text: "main dancer", member: "Lanlan" },
+      { text: "songwritter, lead singer", member: "Rahrah" }
+    ]
+  }
+];
+
+let current = 0;
+let answersCount = {
+  Noni: 0,
+  Nimnim: 0,
+  Thrthr: 0,
+  Lanlan: 0,
+  Rahrah: 0
+};
+
+function renderQuestion() {
+  const q = quizData[current];
+  document.getElementById("Question").textContent = q.question;
+
+  const optionsSpan = document.querySelector("#q_a span");
+  optionsSpan.innerHTML = "";
+
+  q.answers.forEach((ans, index) => {
+    const label = document.createElement("label");
+    label.innerHTML = `
+      <input type="radio" name="question" value="${ans.member}">
+      ${ans.text}
+    `;
+    label.className ="choices";
+    optionsSpan.appendChild(label);
+  });
+}
+
+function nextQuestion() {
+  const selected = document.querySelector('input[name="question"]:checked');
+  if (!selected) {
+    alert("Please choose an answer!");
+    return;
+  }
+
+  const member = selected.value;
+  answersCount[member]++;
+
+  current++;
+
+  if (current < quizData.length) {
+    renderQuestion();
+  } else {
+    showResult();
+  }
+}
+
+function pastQuestion() {
+  if (current > 0) {
+    current--;
+    renderQuestion();
+  }
+}
+
+function showResult() {
+  let topMember = "";
+  let maxCount = 0;
+
+  for (const member in answersCount) {
+    if (answersCount[member] > maxCount) {
+      maxCount = answersCount[member];
+      topMember = member;
+    }
+  }
+
+  document.getElementById("resultText").textContent = `${topMember.toUpperCase()}!`;
+    document.getElementById("resultPopup").style.display = "flex";
+}
+
+function closePopup() {
+    document.getElementById("resultPopup").style.display = "none";
+  }
+
+// Run first question on load
+window.onload = renderQuestion;
+
+  </script>

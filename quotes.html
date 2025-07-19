@@ -1,0 +1,72 @@
+<!DOCTYPE HTML >
+<head>
+<title> Running River </title>
+<link rel="stylesheet" href="RR.css">
+<link rel="icon" type="image/x-icon" href="RR.png"">
+<meta name="viewport" content="width= device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Abyssinica+SIL" rel="stylesheet">
+</head>
+<body>
+ 
+    
+    <header>
+    <a href="members.html" class="mainparts">Members</a>
+    <a href="memories.html" class="mainparts">Mural</a> 
+    <a href="index.html"> <img src="wavelogo.gif" height="60px" width="auto"> </a>
+    <a href="quotes.html" class="mainparts">Quotes</a>
+    <a href="quizzes.html" class="mainparts">Quizzes</a>            
+    </header>
+
+
+    <div id="quote_board">
+     
+    <button onclick="pastQuote()" class="arrows" style="background-image: url(arrow_l.png); background-size: 100px 100px;">  </button>    
+        <div id="quotes_background">
+         <p id="quote"> Quotes </p>
+        </div>
+     <button onclick="nextQuote()" class="arrows" style="background-image: url(arrow_r.png); background-size: 100px 100px;">  </button>
+
+     </div>
+
+
+
+
+
+
+
+
+
+</body>
+
+    <script>
+    const quotes = [
+      "“كالنهر الجاري”",
+      "“التحليل : انك جمل وحمار, تتشارك معاهم بصفات الحقد والتناحة”",
+      "“ثرثر تأثيرو قوي, اخذ من اسمو نصيب ”",
+      "“اففف جوعانه”",
+      "“ما يحتاج شوشتي مغطية على الشمس ”",
+      "“نصير فرقه من 20 ؟!؟!؟ مارح يكفينا المسرح؟!؟”",
+      "“اكسبو ليدر سفنتين”",
+    "“all my friends are toxic ”",
+      "“عشان بعد كدا لا تسمعي كلامي, انا ما اودي غير في مصايب”",
+      "“يوه نسيت اسمك... اثير صح ؟ دخلوني القروب  ”",
+      "“ مبروك الولاده”",
+      "“ قد يندم الاسنان على تهوره ”",
+      "“حب قامد ”",
+      "“الناس طبقات”",  
+        "“ مدري وش قاعد تهبد”",
+      "“تصعيد غير مبرر ”",
+      "“ دردوري از ماي ميدل نيم ”",
+       "“ الحب افعال ”",
+      "“good vibes only”"
+    ];
+    let current = 0;
+    function nextQuote() {
+      current = (current + 1) % quotes.length;
+      document.getElementById("quote").textContent = quotes[current];
+    }
+     function pastQuote() {
+      current = (current - 1) % quotes.length;
+      document.getElementById("quote").textContent = quotes[current];
+    }
+  </script>

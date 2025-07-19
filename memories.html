@@ -1,0 +1,215 @@
+<!DOCTYPE HTML >
+<head>
+<title> Running River </title>
+<link rel="stylesheet" href="RR.css">
+<link rel="icon" type="image/x-icon" href="RR.png"">
+<meta name="viewport" content="width= device-width, initial-scale=1.0">
+<link href="https://fonts.googleapis.com/css2?family=Abyssinica+SIL" rel="stylesheet">
+</head>
+<body>
+ 
+    
+    <header>
+    <a href="members.html" class="mainparts">Members</a>
+    <a href="memories.html" class="mainparts">Mural</a> 
+    <a href="index.html"> <img src="wavelogo.gif" height="60px" width="auto"> </a>
+    <a href="quotes.html" class="mainparts">Quotes</a>
+    <a href="quizzes.html" class="mainparts">Quizzes</a>            
+    </header>
+
+   
+  <div id="board_screen">
+    <div id="board"></div>
+
+    <button id="new_note">Add a new note</button>
+
+    <div id="Notepopup" class="popups">
+      <div class="popups-content">
+        <textarea id="message" placeholder="Write your note..."></textarea>
+        <div class="colorss">
+          <label><input type="radio" name="color" value="white" checked> White </label>
+          <label><input type="radio" name="color" value="pink"> Pink </label>
+          <label><input type="radio" name="color" value="blue"> Blue </label>
+          <label><input type="radio" name="color" value="yellow">Yellow </label>          
+          <label><input type="radio" name="color" value="red"> Red </label>
+          <label><input type="radio" name="color" value="purple"> Purple </label>
+          <label><input type="radio" name="color" value="beige"> Biege </label>
+          <label><input type="radio" name="color" value="green"> Green </label>
+        </div>
+        <div id="buttons">
+        <button id="confirmAddNote" class="popbuttons">Confirm</button>
+        <button onclick="closePopup()" class="popbuttons">Cancel</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  </body>
+
+  <script>
+const popup = document.getElementById('Notepopup');
+const newNoteBtn = document.getElementById('new_note');
+const board = document.getElementById('board');
+const messageInput = document.getElementById('message');
+const confirmAddNoteBtn = document.getElementById('confirmAddNote');
+
+let selectedPosition = null;
+let notes = [];
+
+function loadNotes() {
+  const saved = localStorage.getItem('stickyNotes');
+  if (saved) {
+    notes = JSON.parse(saved);
+    for (const noteData of notes) {
+      createNoteElement(noteData);
+    }
+  }
+}
+
+function saveNotes() {
+  localStorage.setItem('stickyNotes', JSON.stringify(notes));
+}
+
+function createNoteElement({ id, message, color, left, top }) {
+  const note = document.createElement('div');
+  note.classList.add('sticky-note', color);
+  note.style.left = left + 'px';
+  note.style.top = top + 'px';
+  note.setAttribute('data-id', id);
+  note.style.position = 'absolute';
+  note.style.cursor = 'move';
+
+  // Text node needs to exclude delete button, so create a container:
+  const textNode = document.createElement('div');
+  textNode.textContent = message;
+  note.appendChild(textNode);
+
+  // Delete button
+  const delBtn = document.createElement('span');
+  delBtn.classList.add('delete-note');
+  delBtn.innerHTML = '&times;';
+  delBtn.title = "Delete this note";
+  delBtn.style.position = 'absolute';
+  delBtn.style.top = '2px';
+  delBtn.style.right = '5px';
+  delBtn.style.cursor = 'pointer';
+  delBtn.style.userSelect = 'none';
+  delBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    deleteNote(id);
+  });
+  note.appendChild(delBtn);
+
+  makeDraggable(note);
+
+  board.appendChild(note);
+}
+
+function deleteNote(id) {
+  notes = notes.filter(note => note.id !== id);
+  saveNotes();
+  const noteElem = board.querySelector(`[data-id="${id}"]`);
+  if (noteElem) noteElem.remove();
+}
+
+newNoteBtn.addEventListener('click', () => {
+  board.style.cursor = 'crosshair';
+
+  function onClick(e) {
+    const rect = board.getBoundingClientRect();
+    let left = e.clientX - rect.left;
+    let top = e.clientY - rect.top;
+
+    left = Math.min(left, board.clientWidth - 160);
+    top = Math.min(top, board.clientHeight - 110);
+
+    selectedPosition = { left, top };
+
+    board.style.cursor = 'default';
+    board.removeEventListener('click', onClick);
+
+    messageInput.value = '';
+    confirmAddNoteBtn.disabled = false;
+    popup.style.display = 'flex';
+    messageInput.focus();
+  }
+
+  board.addEventListener('click', onClick);
+});
+
+confirmAddNoteBtn.addEventListener('click', () => {
+  const message = messageInput.value.trim();
+  if (!message) {
+    alert('Please enter a message.');
+    return;
+  }
+  if (!selectedPosition) {
+    alert('Please click on the board.');
+    return;
+  }
+  const colorRadios = document.getElementsByName('color');
+  let selectedColor = 'white';
+  for (const radio of colorRadios) {
+    if (radio.checked) {
+      selectedColor = radio.value;
+      break;
+    }
+  }
+
+  const id = Date.now().toString();
+  const noteData = {
+    id,
+    message,
+    color: selectedColor,
+    left: selectedPosition.left,
+    top: selectedPosition.top
+  };
+
+  notes.push(noteData);
+  saveNotes();
+  createNoteElement(noteData);
+  popup.style.display = 'none';
+});
+
+function closePopup() {
+  popup.style.display = 'none';
+  board.style.cursor = 'default';
+}
+
+// Make note draggable
+function makeDraggable(el) {
+  el.style.position = 'absolute';
+
+  let offsetX, offsetY;
+
+  el.addEventListener('mousedown', (e) => {
+    offsetX = e.clientX - el.offsetLeft;
+    offsetY = e.clientY - el.offsetTop;
+
+    function moveHandler(e) {
+      el.style.left = (e.clientX - offsetX) + 'px';
+      el.style.top = (e.clientY - offsetY) + 'px';
+    }
+
+    function upHandler() {
+      document.removeEventListener('mousemove', moveHandler);
+      document.removeEventListener('mouseup', upHandler);
+
+      // Update note position in notes array and save
+      const id = el.getAttribute('data-id');
+      const note = notes.find(n => n.id === id);
+      if (note) {
+        note.left = parseInt(el.style.left);
+        note.top = parseInt(el.style.top);
+        saveNotes();
+      }
+    }
+
+    document.addEventListener('mousemove', moveHandler);
+    document.addEventListener('mouseup', upHandler);
+  });
+}
+
+
+loadNotes();
+</script>
