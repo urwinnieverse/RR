@@ -46,194 +46,175 @@
 
   </body>
 
-  <script>
-const popup = document.getElementById('Notepopup');
-const newNoteBtn = document.getElementById('new_note');
-const board = document.getElementById('board');
-const messageInput = document.getElementById('message');
-const confirmAddNoteBtn = document.getElementById('confirmAddNote');
-
-let selectedPosition = null;
-let notes = [];
-
-async function loadNotes() {
-  const snapshot = await db.collection("stickyNotes").get();
-  notes = [];
-  snapshot.forEach(doc => {
-    const noteData = doc.data();
-    notes.push({ ...noteData, id: doc.id });
-    createNoteElement({ ...noteData, id: doc.id });
-  });
-}
-
-function saveNoteToFirebase(noteData) {
-  return db.collection("stickyNotes").doc(noteData.id).set(noteData);
-}
-
-function createNoteElement({ id, message, color, left, top }) {
-  const note = document.createElement('div');
-  note.classList.add('sticky-note', color);
-  note.style.left = left + 'px';
-  note.style.top = top + 'px';
-  note.setAttribute('data-id', id);
-  note.style.position = 'absolute';
-  note.style.cursor = 'move';
-
-  // Text node needs to exclude delete button, so create a container:
-  const textNode = document.createElement('div');
-  textNode.textContent = message;
-  note.appendChild(textNode);
-
-  // Delete button
-  const delBtn = document.createElement('span');
-  delBtn.classList.add('delete-note');
-  delBtn.innerHTML = '&times;';
-  delBtn.title = "Delete this note";
-  delBtn.style.position = 'absolute';
-  delBtn.style.top = '2px';
-  delBtn.style.right = '5px';
-  delBtn.style.cursor = 'pointer';
-  delBtn.style.userSelect = 'none';
-  delBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    deleteNote(id);
-  });
-  note.appendChild(delBtn);
-
-  makeDraggable(note);
-
-  board.appendChild(note);
-}
-
-function deleteNote(id) {
-  notes = notes.filter(note => note.id !== id);
-  db.collection("stickyNotes").doc(id).delete();
-  const noteElem = board.querySelector(`[data-id="${id}"]`);
-  if (noteElem) noteElem.remove();
-}
-
-newNoteBtn.addEventListener('click', () => {
-  board.style.cursor = 'crosshair';
-
-  function onClick(e) {
-    const rect = board.getBoundingClientRect();
-    let left = e.clientX - rect.left;
-    let top = e.clientY - rect.top;
-
-    left = Math.min(left, board.clientWidth - 160);
-    top = Math.min(top, board.clientHeight - 110);
-
-    selectedPosition = { left, top };
-
-    board.style.cursor = 'default';
-    board.removeEventListener('click', onClick);
-
-    messageInput.value = '';
-    confirmAddNoteBtn.disabled = false;
-    popup.style.display = 'flex';
-    messageInput.focus();
-  }
-
-  board.addEventListener('click', onClick);
-});
-
-confirmAddNoteBtn.addEventListener('click', () => {
-  const message = messageInput.value.trim();
-  if (!message) {
-    alert('Please enter a message.');
-    return;
-  }
-  if (!selectedPosition) {
-    alert('Please click on the board.');
-    return;
-  }
-  const colorRadios = document.getElementsByName('color');
-  let selectedColor = 'white';
-  for (const radio of colorRadios) {
-    if (radio.checked) {
-      selectedColor = radio.value;
-      break;
-    }
-  }
-
-  const id = Date.now().toString();
-  const noteData = {
-    id,
-    message,
-    color: selectedColor,
-    left: selectedPosition.left,
-    top: selectedPosition.top
-  };
-
-  notes.push(noteData);
-  saveNoteToFirebase(noteData);
-  createNoteElement(noteData);
-  popup.style.display = 'none';
-});
-
-function closePopup() {
-  popup.style.display = 'none';
-  board.style.cursor = 'default';
-}
-
-// Make note draggable
-function makeDraggable(el) {
-  el.style.position = 'absolute';
-
-  let offsetX, offsetY;
-
-  el.addEventListener('mousedown', (e) => {
-    offsetX = e.clientX - el.offsetLeft;
-    offsetY = e.clientY - el.offsetTop;
-
-    function moveHandler(e) {
-      el.style.left = (e.clientX - offsetX) + 'px';
-      el.style.top = (e.clientY - offsetY) + 'px';
-    }
-
-    function upHandler() {
-      document.removeEventListener('mousemove', moveHandler);
-      document.removeEventListener('mouseup', upHandler);
-
-      // Update note position in notes array and save
-      const id = el.getAttribute('data-id');
-      const note = notes.find(n => n.id === id);
-      if (note) {
-        note.left = parseInt(el.style.left);
-        note.top = parseInt(el.style.top);
-         saveNoteToFirebase(note);
-      }
-    }
-
-    document.addEventListener('mousemove', moveHandler);
-    document.addEventListener('mouseup', upHandler);
-  });
-}
-
-
-loadNotes();
-</script>
-
-<script type="module">
-  // Import the functions you need from the SDKs you need
+  <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-analytics.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
+  import { getFirestore, collection, getDocs, setDoc, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
-  // Your web app's Firebase configuration
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
   const firebaseConfig = {
     apiKey: "AIzaSyA-cU4jg4jzq6PDd6ba2miKa61g7N0b1XA",
     authDomain: "rrwebsite-79653.firebaseapp.com",
     projectId: "rrwebsite-79653",
-    storageBucket: "rrwebsite-79653.firebasestorage.app",
+    storageBucket: "rrwebsite-79653.appspot.com",
     messagingSenderId: "316431072957",
-    appId: "1:316431072957:web:1723426e8e2b2079cd81d4",
-    measurementId: "G-KGX8RVSVFE"
+    appId: "1:316431072957:web:1723426e8e2b2079cd81d4"
   };
 
-  // Initialize Firebase
   const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
+  const db = getFirestore(app);
+
+  // Your code continues here...
+  const popup = document.getElementById('Notepopup');
+  const newNoteBtn = document.getElementById('new_note');
+  const board = document.getElementById('board');
+  const messageInput = document.getElementById('message');
+  const confirmAddNoteBtn = document.getElementById('confirmAddNote');
+
+  let selectedPosition = null;
+  let notes = [];
+
+  async function loadNotes() {
+    const snapshot = await getDocs(collection(db, "stickyNotes"));
+    notes = [];
+    snapshot.forEach(docSnap => {
+      const noteData = docSnap.data();
+      notes.push({ ...noteData, id: docSnap.id });
+      createNoteElement({ ...noteData, id: docSnap.id });
+    });
+  }
+
+  async function saveNoteToFirebase(noteData) {
+    await setDoc(doc(db, "stickyNotes", noteData.id), noteData);
+  }
+
+  async function deleteNote(id) {
+    notes = notes.filter(note => note.id !== id);
+    await deleteDoc(doc(db, "stickyNotes", id));
+    const noteElem = board.querySelector(`[data-id="${id}"]`);
+    if (noteElem) noteElem.remove();
+  }
+
+  function createNoteElement({ id, message, color, left, top }) {
+    const note = document.createElement('div');
+    note.classList.add('sticky-note', color);
+    note.style.left = left + 'px';
+    note.style.top = top + 'px';
+    note.setAttribute('data-id', id);
+    note.style.position = 'absolute';
+    note.style.cursor = 'move';
+
+    const textNode = document.createElement('div');
+    textNode.textContent = message;
+    note.appendChild(textNode);
+
+    const delBtn = document.createElement('span');
+    delBtn.classList.add('delete-note');
+    delBtn.innerHTML = '&times;';
+    delBtn.title = "Delete this note";
+    delBtn.style.position = 'absolute';
+    delBtn.style.top = '2px';
+    delBtn.style.right = '5px';
+    delBtn.style.cursor = 'pointer';
+    delBtn.style.userSelect = 'none';
+    delBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      deleteNote(id);
+    });
+    note.appendChild(delBtn);
+
+    makeDraggable(note);
+    board.appendChild(note);
+  }
+
+  newNoteBtn.addEventListener('click', () => {
+    board.style.cursor = 'crosshair';
+
+    function onClick(e) {
+      const rect = board.getBoundingClientRect();
+      let left = e.clientX - rect.left;
+      let top = e.clientY - rect.top;
+
+      left = Math.min(left, board.clientWidth - 160);
+      top = Math.min(top, board.clientHeight - 110);
+
+      selectedPosition = { left, top };
+
+      board.style.cursor = 'default';
+      board.removeEventListener('click', onClick);
+
+      messageInput.value = '';
+      confirmAddNoteBtn.disabled = false;
+      popup.style.display = 'flex';
+      messageInput.focus();
+    }
+
+    board.addEventListener('click', onClick);
+  });
+
+  confirmAddNoteBtn.addEventListener('click', () => {
+    const message = messageInput.value.trim();
+    if (!message) return alert('Please enter a message.');
+    if (!selectedPosition) return alert('Please click on the board.');
+
+    const colorRadios = document.getElementsByName('color');
+    let selectedColor = 'white';
+    for (const radio of colorRadios) {
+      if (radio.checked) {
+        selectedColor = radio.value;
+        break;
+      }
+    }
+
+    const id = Date.now().toString();
+    const noteData = {
+      id,
+      message,
+      color: selectedColor,
+      left: selectedPosition.left,
+      top: selectedPosition.top
+    };
+
+    notes.push(noteData);
+    saveNoteToFirebase(noteData);
+    createNoteElement(noteData);
+    popup.style.display = 'none';
+  });
+
+  function closePopup() {
+    popup.style.display = 'none';
+    board.style.cursor = 'default';
+  }
+
+  function makeDraggable(el) {
+    el.style.position = 'absolute';
+
+    let offsetX, offsetY;
+
+    el.addEventListener('mousedown', (e) => {
+      offsetX = e.clientX - el.offsetLeft;
+      offsetY = e.clientY - el.offsetTop;
+
+      function moveHandler(e) {
+        el.style.left = (e.clientX - offsetX) + 'px';
+        el.style.top = (e.clientY - offsetY) + 'px';
+      }
+
+      function upHandler() {
+        document.removeEventListener('mousemove', moveHandler);
+        document.removeEventListener('mouseup', upHandler);
+
+        const id = el.getAttribute('data-id');
+        const note = notes.find(n => n.id === id);
+        if (note) {
+          note.left = parseInt(el.style.left);
+          note.top = parseInt(el.style.top);
+          saveNoteToFirebase(note);
+        }
+      }
+
+      document.addEventListener('mousemove', moveHandler);
+      document.addEventListener('mouseup', upHandler);
+    });
+  }
+
+  loadNotes();
 </script>
